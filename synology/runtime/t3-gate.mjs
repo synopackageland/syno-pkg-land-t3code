@@ -10,6 +10,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import net from "node:net";
+import { createReaper, scanChrome } from "./t3-chrome-reaper.mjs";
 
 const [listenHost, listenPort] = (process.env.T3_GATE_LISTEN ?? "0.0.0.0:8080").split(":");
 const [upHost, upPort] = (process.env.T3_GATE_UPSTREAM ?? "127.0.0.1:3773").split(":");
@@ -21,6 +22,21 @@ const tokenFile = process.env.T3_GATE_TOKEN_FILE;
 const publicPaths = new Set(["/.well-known/t3/environment"]);
 
 const token = () => fs.readFileSync(tokenFile, "utf8").trim();
+
+// Browser tabs stream over /api/preview-stream; see t3-chrome-reaper.mjs.
+const previewPrefix = "/api/preview-stream";
+const idleMinutes = Number(process.env.T3_CHROME_IDLE_MINUTES ?? 10);
+const chromeDir = `${process.env.T3CODE_HOME ?? `${process.env.HOME}/.t3`}/tools/chrome-headless-shell`;
+const reaper =
+  idleMinutes > 0
+    ? createReaper({
+        idleMs: idleMinutes * 60_000,
+        busyCpuSecondsPerMinute: Number(process.env.T3_CHROME_BUSY_CPU_SECONDS_PER_MINUTE ?? 0.5),
+        scan: () => scanChrome(chromeDir),
+      })
+    : null;
+if (reaper) setInterval(() => reaper.poll(), 60_000).unref();
+const isPreview = (req) => (req.url ?? "").startsWith(previewPrefix);
 
 function admitted(req) {
   const path = (req.url ?? "/").split("?")[0];
@@ -51,6 +67,7 @@ const server = http.createServer((req, res) => {
     res.writeHead(401, { "content-type": "text/plain" }).end("unauthorized\n");
     return;
   }
+  if (reaper && isPreview(req)) reaper.previewRequest();
   const up = http.request(
     { host: upHost, port: upPort, method: req.method, path: req.url, headers: upstreamHeaders(req) },
     (upRes) => {
@@ -69,6 +86,10 @@ server.on("upgrade", (req, socket, head) => {
   if (!admitted(req)) {
     socket.end("HTTP/1.1 401 Unauthorized\r\nconnection: close\r\n\r\n");
     return;
+  }
+  if (reaper && isPreview(req)) {
+    reaper.previewOpened();
+    socket.once("close", () => reaper.previewClosed());
   }
   const up = net.connect(+upPort, upHost, () => {
     const headers = upstreamHeaders(req);
