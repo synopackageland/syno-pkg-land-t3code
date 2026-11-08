@@ -8,7 +8,8 @@ files outside `synology/` are upstream's and are never edited.
 - **Version:** `<upstream version>-<build>`, for example `0.1.7-0001`. The
   build restarts at 1 with every upstream release.
 - **Requires:** DSM 7.2.1 or later, Container Manager, an x86_64 or aarch64 NAS.
-  Plan for about 1 GB of RAM for T3 Code and the agents you run.
+  Plan for about 1 GB of RAM for T3 Code and the agents you run, and about
+  300 MB more while a browser tab is open.
 
 ## Using T3 Code
 
@@ -76,6 +77,24 @@ every administrator. If you revoke that session in **Settings → Sharing &
 access**, T3 Code stops answering; stop and start T3 Code in Package Center to
 create a new one.
 
+### Browser tabs and page previews
+
+T3 Code's browser tabs (**Toggle right panel → Browser**) and the page previews
+agents make before showing a visual reply run in a headless Chrome on the NAS.
+The first tab or preview downloads it once (about 130 MB) into the App's
+storage, so it can take a minute; it is updated with T3 Code. A tab can open
+websites and servers the agent or terminal starts on the NAS, such as
+`http://localhost:3000`. Pages render text in Latin, Cyrillic, Greek, Hebrew,
+Arabic, Chinese, Japanese and Korean scripts.
+
+Chrome runs without its own sandbox here: the sandbox needs Linux user
+namespaces, which the container does not grant. The container is the boundary
+instead: it runs as the package's own account with a read-only system, no
+Linux capabilities and no way to gain privileges. A page that broke out of
+Chrome would have the same access as the agents and the terminal already have:
+T3 Code's data and the selected Shared Folder. Open only sites you trust in a
+tab, as you would with any browser an agent controls.
+
 ### Access from outside your network
 
 T3 Code has its own HTTPS port, chosen in the install wizard (default 23773),
@@ -130,6 +149,12 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   resets it, so `/etc/profile.d/synology-t3-path.sh` puts `~/.local/bin` first.
 - **git:** repositories in the Shared Folder belong to DSM users, so the image
   sets `safe.directory` for the package UID.
+- **Headless Chrome:** T3 Code downloads its pinned Chrome for Testing
+  `chrome-headless-shell` into `~/.t3/tools` on first use (linux64 and
+  linux-arm64). The image provides only the shared libraries and fonts it needs,
+  and sets `T3CODE_SERVER_BROWSER_SANDBOX=0` because Chrome's sandbox cannot start
+  without user namespaces; no capability, privileged mode or seccomp change is
+  used.
 
 ## Maintaining
 
@@ -149,9 +174,10 @@ where GitHub's release CDN is unreachable), checks them against upstream's
 image for linux/amd64 and linux/arm64 into `.build/runtime.oci.tar`, and writes
 its index digest to `compose.image.yaml`.
 
-`synopkgland build` reads the image's manifests from the registry. Before the
-image is published, serve the archive from a local registry and point the CLI
-at it:
+`synopkgland build` reads the image's manifests from the registry, and the SDK
+only accepts registries at public IP addresses. Before the image is published,
+serve the archive from a local registry on an internal Docker network with a
+public-range address, and point the CLI at it:
 
 ```sh
 skopeo copy --all --preserve-digests oci-archive:.build/runtime.oci.tar \
@@ -163,7 +189,8 @@ SYNOPKGLAND_COMPOSE_REGISTRY_MIRRORS='{"ghcr.io":"https://<local-registry>"}' np
 
 1. Publish the exact archive, keeping its digest:
    `skopeo copy --all --preserve-digests oci-archive:.build/runtime.oci.tar docker://ghcr.io/synopackageland/syno-pkg-land-t3code-runtime:<tag>`.
-   Make the package public. Container Manager downloads it at install.
+   Make the package public in its GitHub package settings (there is no API for
+   this). Container Manager downloads it anonymously at install.
 2. Rebuild the SPKs without a mirror and check that `inspect` reports the same
    image digest.
 
@@ -185,5 +212,4 @@ notes for changes to the auth descriptor, `/.well-known/t3/environment`,
   has no base-path setting, so it has its own HTTPS port.
 - One shared instance for administrators; no per-user isolation.
 - Revoking the **DSM sign-in** session needs a package restart.
-- T3 Code's browser tabs and HTML previews need a headless Chrome sandbox that
-  the container does not provide; they are unavailable.
+- Chrome's own sandbox is off inside the container (see above).
