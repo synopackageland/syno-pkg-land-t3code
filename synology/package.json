@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:unit",
+    "test:unit": "node --test tests/unit/*.test.mjs",
+    "test:local": "node --test tests/local/*.test.mjs",
+    "e2e:smoke": "node --env-file-if-exists=.env node_modules/@synopackageland/cli/dist/e2e/dsm.js tunnel -- e2e run tests/e2e/smoke.e2e.ts"
+  },
+  "devDependencies": {
+    "@synopackageland/cli": "0.52.6",
+    "@e2e-dev/web": "^0.14.0",
+    "e2e": "^0.19.0"
+  }
+}

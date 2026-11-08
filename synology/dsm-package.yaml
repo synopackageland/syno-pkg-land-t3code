@@ -1,0 +1,170 @@
+# T3 Code for DSM: upstream's T3 Code server and web app in one container,
+# behind DSM administrator sign-in. Upstream files stay unchanged; everything
+# DSM-specific lives in synology/. `synopkgland build` reads this file.
+schema: 2
+
+package: T3Code
+version: 0.1.7
+# The build resets to 1 with every upstream release (INFO <upstream>-0001).
+build: 1
+displayname: T3 Code
+description: Use coding agents such as Codex and Claude Code from your browser, on your NAS
+# The original project is the maintainer; Syno Package Land is the distributor.
+maintainer: T3 Tools
+# Upstream's own app icon, unchanged (assets/icon-source.json).
+icon: assets/t3code-icon.png
+os_min_ver: "7.2.1-69057"
+# Upstream publishes glibc Linux builds for x86_64 and aarch64 only, and
+# Container Manager is required. Of the aarch64 platforms only rtd1619b runs
+# Container Manager; the others fail the SDK's Container Manager preflight
+# with its install message (arches cannot name single platforms).
+arches: [x86_64, aarch64]
+
+# Administrators only: the terminal and the agents act as the package account
+# on every file in the selected Shared Folder, so all administrators share one
+# T3 Code instance and its agent sign-ins.
+entry: admin-only
+ui: {launch: new-page}
+capabilities: {composeMounts: true}
+
+install:
+  # The gateway's HTTPS port is chosen in the install wizard.
+  ports: true
+  # Where projects live; mounted read/write at /workspace.
+  sharedFolder: {mode: dedicated, key: workspace, name: T3Code, permission: rw}
+
+compose:
+  files: [compose.yaml, compose.image.yaml]
+  # Token adapter for the gateway (helper/), one static binary per arch.
+  helpers: {x86_64: .build/helpers/x86_64, aarch64: .build/helpers/aarch64}
+  # T3 Code's unauthenticated environment descriptor; t3-gate lets only this
+  # path through without the gateway key. `/health` is the SPA fallback page.
+  web: {service: t3code, port: 8080, health: {path: /.well-known/t3/environment, status: 200}}
+  # Agents are installed, updated and used over the internet.
+  network: {egress: internet}
+  shares:
+    workspace:
+      select: install
+      permission: rw
+      mounts: [{service: t3code, target: /workspace}]
+  services:
+    t3code:
+      storage_init:
+        # The persistent home: T3 Code's data, installed agents, sign-ins.
+        directories: [{base: /data, path: home}]
+        runtime:
+          environment:
+            # Per-install key t3-gate requires; t3-key sends the same value.
+            T3_GATE_KEY: {secret: gateway-key}
+
+identity_gateway:
+  sdk: 0.53.9
+  # After DSM admits an administrator, t3-key adds the gateway key and t3-gate
+  # adds T3 Code's own session, so there is no T3 pairing step.
+  mode: token
+  access: dsm-admins
+  token: {exec: t3-key}
+  # T3 Code's web app builds every URL from the origin root (/assets, /api,
+  # /ws, /.well-known, /oauth) and has no base-path setting, so it needs a
+  # dedicated HTTPS port (DSM's certificate) instead of a DSM path.
+  listen: {https: 23773}
+
+metadata:
+  license: MIT
+  homepage: https://t3.codes/
+  source_url: https://github.com/synopackageland/syno-pkg-land-t3code
+  issues_url: https://github.com/synopackageland/syno-pkg-land-t3code/issues
+  maintainer_url: https://github.com/pingdotgg/t3code
+  distributor: Syno Package Land
+  distributor_url: https://synopkgland.com/
+  upstream:
+    name: t3code
+    url: https://github.com/pingdotgg/t3code
+  long_description:
+    en: |-
+      T3 Code is a minimal web GUI for coding agents. Install Codex, Claude Code, Pi,
+      OpenCode or another supported agent from T3 Code's setup wizard or its built-in
+      terminal, sign in once, and work on projects in the selected Shared Folder.
+      Agents are not bundled: they are installed in the App's own storage, so you can
+      update them as soon as they release. For DSM administrators only; all
+      administrators share one instance and its agent sign-ins. T3 Connect, network
+      pairing and usage data are off, and updates come only from Package Center. To
+      reach it from outside your network, use a VPN.
+    zh-TW: |-
+      T3 Code 是 coding agent 的精簡網頁介面。可從 T3 Code 的設定精靈或內建終端機安裝
+      Codex、Claude Code、Pi、OpenCode 等支援的 agent，登入一次後即可處理所選共用資料夾
+      中的專案。套件不內附 agent，agent 安裝在 App 自己的儲存空間，有新版即可自行更新。僅限
+      DSM 管理員使用，所有管理員共用同一個執行個體與 agent 登入。T3 Connect、網路配對與使用
+      資料皆已關閉，更新只透過套件中心。如需從外部網路存取，請使用 VPN。
+    zh-CN: |-
+      T3 Code 是 coding agent 的精简网页界面。可从 T3 Code 的设置向导或内置终端安装
+      Codex、Claude Code、Pi、OpenCode 等支持的 agent，登录一次后即可处理所选共享文件夹
+      中的项目。套件不附带 agent，agent 安装在 App 自己的存储空间，有新版即可自行更新。仅限
+      DSM 管理员使用，所有管理员共用同一个实例与 agent 登录。T3 Connect、网络配对与使用
+      数据均已关闭，更新只通过套件中心。如需从外部网络访问，请使用 VPN。
+    ja: |-
+      T3 Code はコーディングエージェント向けの軽量な Web GUI です。T3 Code のセットアップ
+      ウィザードや内蔵ターミナルから Codex、Claude Code、Pi、OpenCode などの対応エージェント
+      をインストールし、一度サインインすれば、選択した共有フォルダー内のプロジェクトで作業で
+      きます。エージェントは同梱されず App 専用のストレージにインストールされるため、新しい
+      リリースにすぐ更新できます。DSM 管理者専用で、すべての管理者が 1 つのインスタンスと
+      エージェントのサインインを共有します。T3 Connect、ネットワークペアリング、利用データは
+      オフで、更新はパッケージセンターからのみ行われます。外部ネットワークからは VPN を使用し
+      てください。
+    ko: |-
+      T3 Code는 코딩 에이전트를 위한 간결한 웹 GUI예요. T3 Code의 설정 마법사나 내장 터미널에서
+      Codex, Claude Code, Pi, OpenCode 등 지원되는 에이전트를 설치하고 한 번 로그인하면 선택한
+      공유 폴더의 프로젝트에서 작업할 수 있어요. 에이전트는 포함되지 않고 App 전용 저장 공간에
+      설치되므로 새 버전이 나오면 바로 업데이트할 수 있어요. DSM 관리자 전용이며 모든 관리자가
+      하나의 인스턴스와 에이전트 로그인을 공유해요. T3 Connect, 네트워크 페어링, 사용 데이터는
+      꺼져 있고 업데이트는 패키지 센터에서만 받아요. 외부 네트워크에서는 VPN을 사용하세요.
+    de: |-
+      T3 Code ist eine schlanke Web-Oberfläche für Coding-Agenten. Installieren Sie Codex,
+      Claude Code, Pi, OpenCode oder einen anderen unterstützten Agenten über den
+      Einrichtungsassistenten oder das integrierte Terminal von T3 Code, melden Sie sich
+      einmal an und arbeiten Sie an Projekten im ausgewählten freigegebenen Ordner. Agenten
+      sind nicht enthalten: Sie werden im eigenen Speicher der App installiert und lassen sich
+      sofort aktualisieren. Nur für DSM-Administratoren; alle Administratoren teilen sich eine
+      Instanz und deren Agenten-Anmeldungen. T3 Connect, Netzwerk-Kopplung und
+      Nutzungsdaten sind deaktiviert, Updates kommen nur aus dem Paket-Zentrum. Für den
+      Zugriff von außerhalb Ihres Netzwerks verwenden Sie ein VPN.
+    fr: |-
+      T3 Code est une interface web légère pour les agents de code. Installez Codex, Claude
+      Code, Pi, OpenCode ou un autre agent pris en charge depuis l'assistant de configuration
+      ou le terminal intégré de T3 Code, connectez-vous une fois et travaillez sur les projets
+      du dossier partagé sélectionné. Les agents ne sont pas inclus : ils sont installés dans
+      le stockage propre de l'App, vous pouvez donc les mettre à jour dès leur sortie. Réservé
+      aux administrateurs DSM ; tous les administrateurs partagent une instance et ses
+      connexions aux agents. T3 Connect, l'appairage réseau et les données d'utilisation sont
+      désactivés, et les mises à jour viennent uniquement du Centre de paquets. Pour y accéder
+      depuis l'extérieur de votre réseau, utilisez un VPN.
+    es: |-
+      T3 Code es una interfaz web ligera para agentes de código. Instala Codex, Claude Code,
+      Pi, OpenCode u otro agente compatible desde el asistente de configuración o el terminal
+      integrado de T3 Code, inicia sesión una vez y trabaja en los proyectos de la carpeta
+      compartida seleccionada. Los agentes no se incluyen: se instalan en el almacenamiento
+      propio de la App, así que puedes actualizarlos en cuanto se publiquen. Solo para
+      administradores de DSM; todos los administradores comparten una instancia y sus inicios
+      de sesión de agentes. T3 Connect, el emparejamiento por red y los datos de uso están
+      desactivados, y las actualizaciones llegan solo desde el Centro de paquetes. Para
+      acceder desde fuera de tu red, usa una VPN.
+    it: |-
+      T3 Code è un'interfaccia web leggera per gli agenti di coding. Installa Codex, Claude
+      Code, Pi, OpenCode o un altro agente supportato dalla procedura guidata o dal terminale
+      integrato di T3 Code, accedi una volta e lavora sui progetti della cartella condivisa
+      selezionata. Gli agenti non sono inclusi: vengono installati nello spazio dell'App,
+      quindi puoi aggiornarli appena escono. Solo per gli amministratori DSM; tutti gli
+      amministratori condividono un'istanza e i relativi accessi agli agenti. T3 Connect,
+      l'abbinamento di rete e i dati di utilizzo sono disattivati e gli aggiornamenti arrivano
+      solo dal Centro pacchetti. Per accedere dall'esterno della rete, usa una VPN.
+
+i18n:
+  info:
+    zh-TW: {description: "在瀏覽器中使用 Codex、Claude Code 等 coding agent，由你的 NAS 提供服務"}
+    zh-CN: {description: "在浏览器中使用 Codex、Claude Code 等 coding agent，由你的 NAS 提供服务"}
+    ja: {description: "Codex や Claude Code などのコーディングエージェントをブラウザーで。NAS から提供"}
+    ko: {description: "Codex, Claude Code 같은 코딩 에이전트를 브라우저에서. NAS에서 제공"}
+    de: {description: "Coding-Agenten wie Codex und Claude Code im Browser, bereitgestellt von Ihrem NAS"}
+    fr: {description: "Les agents de code comme Codex et Claude Code dans votre navigateur, servis par votre NAS"}
+    es: {description: "Agentes de código como Codex y Claude Code en tu navegador, servidos desde tu NAS"}
+    it: {description: "Agenti di coding come Codex e Claude Code nel browser, serviti dal tuo NAS"}

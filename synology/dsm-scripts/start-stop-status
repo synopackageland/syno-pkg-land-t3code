@@ -1,0 +1,59 @@
+#!/bin/sh
+# start-stop-status: DSM calls it with one argument:
+#   start     the user started the package, at boot, or after install/upgrade
+#   stop      the user stopped it, at shutdown, before upgrade and uninstall
+#   status    DSM asks whether the package runs
+#   prestart, prestop  only when INFO has precheckstartstop (the SDK sets it
+#             for daemon and background-job Apps); non-zero refuses the action
+#
+# Order: start, prestart and status run the SDK steps first, then this script.
+# stop and prestop run this script first, then the SDK steps; the SDK stop
+# always runs. If this script fails at start, the SDK stops again.
+# SYNOPKG_PKG_STATUS tells why (START, STOP, INSTALL, UPGRADE, UNINSTALL, or
+# empty at boot and shutdown).
+#
+# Runs as the package account, never as root. Root work belongs in root/*.sh
+# through the SDK executor (synopkgland add root-ops).
+#
+# Environment (DSM sets these; the SDK passes them through unchanged):
+#   SYNOPKG_PKGNAME, SYNOPKG_PKGVER   package id and the version being installed
+#   SYNOPKG_OLD_PKGVER                the previous version (upgrade only)
+#   SYNOPKG_PKG_STATUS                INSTALL, UPGRADE, UNINSTALL, START, STOP,
+#                                     or empty at boot and shutdown
+#   SYNOPKG_PKGDEST                   installed files (/var/packages/<id>/target)
+#   SYNOPKG_PKGVAR, SYNOPKG_PKGHOME   package data and home; kept across upgrades
+#   SYNOPKG_TEMP_LOGFILE              write a message for the user here
+#   SYNOPKG_DSM_LANGUAGE              DSM language code (enu, cht, chs, jpn, ...)
+#   SYNOPKG_DSM_VERSION_MAJOR, _MINOR, _BUILD, SYNOPKG_DSM_ARCH
+#   SYNOPKG_USERNAME                  who started the action; empty when DSM did
+#
+# Exit code: for start and stop, 0 is success and non-zero a failure. For
+# status, the SDK asks this script only while the SDK runs: 0 running,
+# 3 not running, 4 unknown, 150 broken (DSM's own codes).
+#
+# To tell the user why something failed, write plain text to the message file
+# and exit non-zero; DSM shows it after the action:
+#   echo "Port 8080 is already in use." > "$SYNOPKG_TEMP_LOGFILE"
+#   exit 1
+#
+# Do not:
+#   - start, stop or clean up what the SDK owns (daemon, background worker,
+#     executor, portal, Shared Folder, app data deletion, uninstall.purge);
+#   - need root or try to gain it;
+#   - block for long: neither DSM nor the SDK documents a timeout, so a script
+#     that hangs blocks Package Center.
+#
+# More: synopkgland skill show lifecycle
+
+case "$1" in
+  start)
+    # Example: refuse to start without a setting the App needs.
+    # if [ ! -s "$SYNOPKG_PKGVAR/settings.json" ]; then
+    #   echo "Open the App once to finish its setup." > "$SYNOPKG_TEMP_LOGFILE"
+    #   exit 1
+    # fi
+    exit 0 ;;
+  stop) exit 0 ;;
+  status) exit 0 ;;
+  *) exit 0 ;;
+esac

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "organization": "Syno Package Land",
+  "supportUrl": "https://synopkgland.com/",
+  "limits": {
+    "clients": ["local-browser"],
+    "connect": false,
+    "telemetry": false,
+    "updates": { "mode": "off" }
+  }
+}

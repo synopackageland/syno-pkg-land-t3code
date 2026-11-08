@@ -1,0 +1,17 @@
+# T3 Code for DSM. One service: T3 Code on the container's loopback and
+# t3-gate on 8080, the only way in (runtime/t3-gate.mjs).
+# The image digest comes from compose.image.yaml, written by build-source.sh.
+services:
+  t3code:
+    image: ghcr.io/synopackageland/syno-pkg-land-t3code-runtime:SELECT_RUNTIME_TAG
+    hostname: t3code
+    # storage_init needs the explicit argv; it is the image's own entrypoint.
+    entrypoint: [/usr/bin/tini, --, /usr/local/bin/t3-launch]
+    read_only: true
+    tmpfs: [/tmp]
+    volumes:
+      - home:/data
+    environment:
+      T3_WORKSPACE: /workspace
+volumes:
+  home: {}

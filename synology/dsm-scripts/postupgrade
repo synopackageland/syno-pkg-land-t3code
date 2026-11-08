@@ -1,0 +1,54 @@
+#!/bin/sh
+# postupgrade: runs at the end of an upgrade, after the new postinst
+# (SYNOPKG_PKG_STATUS=UPGRADE). It is the NEW version's script.
+#
+# Order: the SDK's postupgrade steps first, then this script. If the SDK steps
+# fail, this script does not run.
+#
+# Runs as the package account, never as root. Root work belongs in root/*.sh
+# through the SDK executor (synopkgland add root-ops). Root cleanup or
+# migration after an install or upgrade is the executor's start step
+# (root.start): it runs once per new version, at the executor's first start
+# after an administrator's approval. Package start only requests the executor
+# and does not wait for it, so this script cannot see that step; keep only the
+# unprivileged follow-up here. The App reads the step's result from the
+# executor status (start_step).
+#
+# Environment (DSM sets these; the SDK passes them through unchanged):
+#   SYNOPKG_PKGNAME, SYNOPKG_PKGVER   package id and the version being installed
+#   SYNOPKG_OLD_PKGVER                the previous version (upgrade only)
+#   SYNOPKG_PKG_STATUS                INSTALL, UPGRADE, UNINSTALL, START, STOP,
+#                                     or empty at boot and shutdown
+#   SYNOPKG_PKGDEST                   installed files (/var/packages/<id>/target)
+#   SYNOPKG_PKGVAR, SYNOPKG_PKGHOME   package data and home; kept across upgrades
+#   SYNOPKG_TEMP_LOGFILE              write a message for the user here
+#   SYNOPKG_DSM_LANGUAGE              DSM language code (enu, cht, chs, jpn, ...)
+#   SYNOPKG_DSM_VERSION_MAJOR, _MINOR, _BUILD, SYNOPKG_DSM_ARCH
+#   SYNOPKG_USERNAME                  who started the action; empty when DSM did
+#
+# Upgrade wizard answers arrive as environment variables named by each item's
+# key. A silent upgrade shows no wizard, so always have a default.
+#
+# Exit code: 0 is success; non-zero leaves the package in a failed state
+# (DSM's own rule).
+#
+# To tell the user why something failed, write plain text to the message file
+# and exit non-zero; DSM shows it after the action:
+#   echo "Port 8080 is already in use." > "$SYNOPKG_TEMP_LOGFILE"
+#   exit 1
+#
+# Do not:
+#   - start, stop or clean up what the SDK owns (daemon, background worker,
+#     executor, portal, Shared Folder, app data deletion, uninstall.purge);
+#   - need root or try to gain it;
+#   - block for long: neither DSM nor the SDK documents a timeout, so a script
+#     that hangs blocks Package Center.
+#
+# More: synopkgland skill show lifecycle
+
+# Example: migrate the App's data once, from versions before 1.2.
+# case "${SYNOPKG_OLD_PKGVER:-}" in
+#   0.*|1.0*|1.1*) "$SYNOPKG_PKGDEST/app/migrate" || exit 1 ;;
+# esac
+
+exit 0

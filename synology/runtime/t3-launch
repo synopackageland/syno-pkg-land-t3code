@@ -1,0 +1,58 @@
+#!/bin/bash
+# Container entrypoint.
+# 1. Prepare the persistent home (agents installed by the user live here).
+# 2. Run T3 Code on the container's loopback only.
+# 3. Make sure a long-lived T3 session exists for the DSM gateway, then run
+#    t3-gate on the bridge port; t3-gate is the only way in.
+set -eu
+
+T3_PORT=3773
+GATE_PORT=${T3_GATE_PORT:-8080}
+token_file="$T3CODE_HOME/gateway/token"
+
+# The package UID has no passwd entry in the image; ssh, git and shells want one.
+if ! getent passwd "$(id -u)" >/dev/null; then
+  printf 'synopkg:x:%s:%s:T3 Code:%s:/bin/bash\n' "$(id -u)" "$(id -g)" "$HOME" >/tmp/passwd
+  cat /etc/passwd >>/tmp/passwd
+  { cat /etc/group; printf 'synopkg:x:%s:\n' "$(id -g)"; } >/tmp/group
+  export LD_PRELOAD=libnss_wrapper.so NSS_WRAPPER_PASSWD=/tmp/passwd NSS_WRAPPER_GROUP=/tmp/group
+fi
+
+# The SDK loads the per-install gateway key from its runtime secret.
+[ "${#T3_GATE_KEY}" -ge 32 ] || { echo "t3-launch: T3_GATE_KEY is missing" >&2; exit 1; }
+workspace=${T3_WORKSPACE:-$HOME/workspace}
+[ -d "$workspace" ] || workspace=$HOME/workspace
+
+mkdir -p "$HOME/.local/bin" "$HOME/.cache" "$HOME/.config" "$T3CODE_HOME/gateway" "$HOME/workspace"
+chmod 700 "$T3CODE_HOME/gateway"
+[ -f "$HOME/.bashrc" ] || cat >"$HOME/.bashrc" <<'RC'
+# Agents you install here survive package upgrades.
+export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.bun/bin:/opt/t3:$PATH"
+PS1='\w \$ '
+RC
+
+cd "$workspace"
+/opt/t3/t3 serve --host 127.0.0.1 --port "$T3_PORT" --no-browser &
+t3_pid=$!
+trap 'kill -TERM "$t3_pid" "${gate_pid:-}" 2>/dev/null; wait' TERM INT
+
+for _ in $(seq 1 120); do
+  curl -fs -o /dev/null "http://127.0.0.1:$T3_PORT/.well-known/t3/environment" && break
+  kill -0 "$t3_pid" || exit 1
+  sleep 1
+done
+
+session_ok() {
+  [ -s "$token_file" ] &&
+    curl -fs -H "authorization: Bearer $(cat "$token_file")" \
+      "http://127.0.0.1:$T3_PORT/api/auth/session" | grep -q '"authenticated":true'
+}
+if ! session_ok; then
+  (umask 077; /opt/t3/t3 auth session issue --ttl 3650d --label "DSM sign-in" --token-only >"$token_file.new")
+  mv "$token_file.new" "$token_file"
+fi
+
+T3_GATE_LISTEN="0.0.0.0:$GATE_PORT" T3_GATE_UPSTREAM="127.0.0.1:$T3_PORT" \
+  T3_GATE_TOKEN_FILE="$token_file" node /opt/synology/t3-gate.mjs &
+gate_pid=$!
+wait -n "$t3_pid" "$gate_pid"

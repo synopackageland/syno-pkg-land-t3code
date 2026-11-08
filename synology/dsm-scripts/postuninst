@@ -1,0 +1,51 @@
+#!/bin/sh
+# postuninst: runs after DSM deleted the package files. It runs at uninstall
+# (SYNOPKG_PKG_STATUS=UNINSTALL) AND during an upgrade (UPGRADE), where it is
+# the OLD version's script. SYNOPKG_PKGDEST no longer exists here.
+#
+# Order: the SDK's postuninst steps first (deleting app data when the user
+# chose it in the uninstall wizard), then this script. If the SDK steps fail,
+# this script does not run.
+#
+# Runs as the package account, never as root. Root work belongs in root/*.sh
+# through the SDK executor (synopkgland add root-ops).
+#
+# Environment (DSM sets these; the SDK passes them through unchanged):
+#   SYNOPKG_PKGNAME, SYNOPKG_PKGVER   package id and the version being installed
+#   SYNOPKG_OLD_PKGVER                the previous version (upgrade only)
+#   SYNOPKG_PKG_STATUS                INSTALL, UPGRADE, UNINSTALL, START, STOP,
+#                                     or empty at boot and shutdown
+#   SYNOPKG_PKGDEST                   installed files (/var/packages/<id>/target)
+#   SYNOPKG_PKGVAR, SYNOPKG_PKGHOME   package data and home; kept across upgrades
+#   SYNOPKG_TEMP_LOGFILE              write a message for the user here
+#   SYNOPKG_DSM_LANGUAGE              DSM language code (enu, cht, chs, jpn, ...)
+#   SYNOPKG_DSM_VERSION_MAJOR, _MINOR, _BUILD, SYNOPKG_DSM_ARCH
+#   SYNOPKG_USERNAME                  who started the action; empty when DSM did
+#
+# Uninstall wizard answers arrive as environment variables named by each
+# item's key. The SDK's uninstall wizard already asks about deleting app data.
+#
+# Exit code: DSM documents no meaning for postuninst; exit 0 unless something
+# the user must know failed.
+#
+# To tell the user why something failed, write plain text to the message file
+# and exit non-zero; DSM shows it after the action:
+#   echo "Port 8080 is already in use." > "$SYNOPKG_TEMP_LOGFILE"
+#   exit 1
+#
+# Do not:
+#   - start, stop or clean up what the SDK owns (daemon, background worker,
+#     executor, portal, Shared Folder, app data deletion, uninstall.purge);
+#   - need root or try to gain it;
+#   - block for long: neither DSM nor the SDK documents a timeout, so a script
+#     that hangs blocks Package Center.
+#
+# More: synopkgland skill show lifecycle
+
+# Example: on a real uninstall only, remove a file the App wrote outside its
+# data directories.
+# if [ "${SYNOPKG_PKG_STATUS:-}" = UNINSTALL ]; then
+#   rm -f "$SYNOPKG_PKGHOME/settings-backup.json"
+# fi
+
+exit 0
