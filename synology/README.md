@@ -174,16 +174,18 @@ where GitHub's release CDN is unreachable), checks them against upstream's
 image for linux/amd64 and linux/arm64 into `.build/runtime.oci.tar`, and writes
 its index digest to `compose.image.yaml`.
 
-`synopkgland build` reads the image's manifests from the registry, and the SDK
-only accepts registries at public IP addresses. Before the image is published,
-serve the archive from a local registry on an internal Docker network with a
-public-range address, and point the CLI at it:
+`synopkgland build` reads the image's manifests from the registry, anonymously
+and without a proxy. Where the build host cannot reach the registry, or before
+the image is published, build from the OCI archive instead:
 
 ```sh
-skopeo copy --all --preserve-digests oci-archive:.build/runtime.oci.tar \
-  docker://<local-registry>/synopackageland/syno-pkg-land-t3code-runtime:<tag>
-SYNOPKGLAND_COMPOSE_REGISTRY_MIRRORS='{"ghcr.io":"https://<local-registry>"}' npx synopkgland build ...
+node scripts/offline-build.mjs
 ```
+
+It hands the archive's index, platform manifests and configs to the CLI's
+`buildStandalone` as image proofs. The SDK verifies their SHA-256, repository and
+platform against `compose.image.yaml`, so the SPKs are the ones a registry build
+would produce. Publish that same archive (below) before installing them.
 
 ### Release
 
