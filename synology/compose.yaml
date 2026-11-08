@@ -13,5 +13,7 @@ services:
       - home:/data
     environment:
       T3_WORKSPACE: /workspace
+      # End T3 Code's headless Chrome after this many idle minutes (0: never).
+      T3_CHROME_IDLE_MINUTES: "10"
 volumes:
   home: {}

@@ -87,6 +87,11 @@ websites and servers the agent or terminal starts on the NAS, such as
 `http://localhost:3000`. Pages render text in Latin, Cyrillic, Greek, Hebrew,
 Arabic, Chinese, Japanese and Korean scripts.
 
+T3 Code keeps that Chrome running once started, which costs about 300 MB. The
+package ends it after 10 minutes without use and T3 Code starts it again, in a
+few seconds, the next time a tab or preview needs it; pages that were open
+reload then.
+
 Chrome runs without its own sandbox here: the sandbox needs Linux user
 namespaces, which the container does not grant. The container is the boundary
 instead: it runs as the package's own account with a read-only system, no
@@ -155,6 +160,18 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   and sets `T3CODE_SERVER_BROWSER_SANDBOX=0` because Chrome's sandbox cannot start
   without user namespaces; no capability, privileged mode or seccomp change is
   used.
+- **Idle Chrome** (`runtime/t3-chrome-reaper.mjs`, run inside `t3-gate`): every
+  minute it reads `/proc` for T3 Code's own `chrome-headless-shell` processes.
+  Chrome counts as idle only when, for the whole `T3_CHROME_IDLE_MINUTES` period
+  (10; 0 turns it off), no browser-tab viewer was connected to
+  `/api/preview-stream`, no preview request passed `t3-gate`, and Chrome used at
+  most `T3_CHROME_BUSY_CPU_SECONDS_PER_MINUTE` (0.5) of CPU per minute. Agents
+  drive Chrome inside the T3 server, out of `t3-gate`'s sight, so their use is
+  seen as Chrome CPU; an idle browser uses about 0.01 s per minute. It then sends
+  SIGTERM to the browser and, 10 seconds later, SIGKILL to those same processes
+  if they remain. T3 Code relaunches Chrome when it notices the browser has
+  exited. Without Chrome a poll is a single `/proc` scan, and it logs one line
+  per reclaim.
 
 ## Maintaining
 
