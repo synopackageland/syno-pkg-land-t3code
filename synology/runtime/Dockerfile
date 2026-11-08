@@ -7,10 +7,17 @@
 # Build with build-source.sh, which supplies the "release" build context.
 FROM public.ecr.aws/docker/library/node:24.22.2-bookworm-slim@sha256:01d566e8d94d8c619591d78652babfccd3c6992a3dffa9ed5ab39e11cf6c70e9
 
+# The second group is what T3 Code's headless Chrome (downloaded by T3 Code into
+# its home on first use) links against; the fonts make pages render text in
+# Latin, Cyrillic, Greek, Hebrew, Arabic, Chinese, Japanese and Korean.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl git openssh-client ripgrep python3 python3-venv \
       bash less procps unzip xz-utils jq file tini libnss-wrapper \
+      fontconfig fonts-liberation fonts-dejavu-core fonts-noto-cjk \
+      libglib2.0-0 libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 \
+      libdbus-1-3 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
+      libxrandr2 libxkbcommon0 libgbm1 libasound2 \
  && rm -rf /var/lib/apt/lists/*
 
 # The npm "t3" package is only a launcher that downloads the release archive
@@ -44,6 +51,11 @@ ENV HOME=/data/home \
     SHELL=/bin/bash \
     T3CODE_NO_BROWSER=1 \
     T3CODE_TELEMETRY_ENABLED=false
+
+# Chrome's own sandbox needs user namespaces the container does not grant (no
+# added capabilities, default seccomp profile). The container is the boundary:
+# package UID, read-only root, no capabilities, no-new-privileges.
+ENV T3CODE_SERVER_BROWSER_SANDBOX=0
 
 # Repositories in the Shared Folder belong to DSM users, not the package UID.
 RUN git config --system safe.directory '*'
