@@ -4,7 +4,7 @@ This folder packages [T3 Code](https://github.com/pingdotgg/t3code), a minimal
 web GUI for coding agents, as a Synology DSM package. Everything here is ours;
 files outside `synology/` are upstream's and are never edited.
 
-- **Maintainer:** T3 Tools (upstream). **Distributor:** Syno Package Land.
+- **Maintainer:** pingdotgg (upstream owner). **Distributor:** Syno Package Land.
 - **Version:** `<upstream version>-<build>`, for example `0.1.7-0001`. The
   build restarts at 1 with every upstream release.
 - **Requires:** DSM 7.2.1 or later, Container Manager, an x86_64 or aarch64 NAS.
