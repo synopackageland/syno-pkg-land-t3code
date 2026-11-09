@@ -165,6 +165,10 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   Before starting T3 Code, the launcher links each existing managed shadow's
   `.sandbox_migration` marker to its shared home, replacing only identical,
   package-owned copies so T3's shadow materialization can proceed.
+- **Temporary files:** `/tmp` (`TMPDIR`) is the SDK's disk scratch in the
+  package's own storage, not memory: owned by the package account, mode 0700
+  and emptied at every start. Agents, npm, git and headless Chrome write their
+  temporary files there; caches stay in the home folder.
 - **git:** repositories in the Shared Folder belong to DSM users, so the image
   sets `safe.directory` for the package UID.
 - **Headless Chrome:** T3 Code downloads its pinned Chrome for Testing
