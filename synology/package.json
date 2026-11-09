@@ -8,8 +8,8 @@
     "e2e:smoke": "node --env-file-if-exists=.env node_modules/@synopackageland/cli/dist/e2e/dsm.js tunnel -- e2e run tests/e2e/smoke.e2e.ts"
   },
   "devDependencies": {
-    "@synopackageland/cli": "~0.52.14",
     "@e2e-dev/web": "^0.14.0",
+    "@synopackageland/cli": "~0.52.15",
     "e2e": "^0.19.0"
   }
 }
