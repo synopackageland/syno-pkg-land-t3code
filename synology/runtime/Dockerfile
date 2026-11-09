@@ -64,7 +64,7 @@ RUN git config --system safe.directory '*'
 COPY policy.json /etc/t3code/policy.json
 COPY profile-path.sh /etc/profile.d/synology-t3-path.sh
 COPY t3-launch /usr/local/bin/t3-launch
-COPY codex /opt/synology/bin/codex
+COPY codex codex-runtime.cjs /opt/synology/bin/
 COPY t3-gate.mjs t3-chrome-reaper.mjs /opt/synology/
 COPY LICENSE-wrapper.txt /usr/share/doc/syno-pkg-land-t3code/LICENSE
 # A fresh named volume copies this directory and its mode, so the fixed but
