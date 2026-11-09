@@ -152,6 +152,14 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   updates off, T3 Connect off, usage data off, loopback clients only.
 - **PATH:** T3 Code reads PATH from a login shell; Debian's `/etc/profile`
   resets it, so `/etc/profile.d/synology-t3-path.sh` puts `~/.local/bin` first.
+  Bare `codex` calls fall back to T3 Code's active managed Codex release; a CLI
+  installed by the user keeps priority. When `CODEX_HOME` is unset, the fallback
+  uses the configured managed home and the matching app-server's existing
+  managed authentication configuration, waiting for a cold main turn to start
+  that runtime; an explicit `CODEX_HOME` is preserved.
+  Before starting T3 Code, the launcher links each existing managed shadow's
+  `.sandbox_migration` marker to its shared home, replacing only identical,
+  package-owned copies so T3's shadow materialization can proceed.
 - **git:** repositories in the Shared Folder belong to DSM users, so the image
   sets `safe.directory` for the package UID.
 - **Headless Chrome:** T3 Code downloads its pinned Chrome for Testing

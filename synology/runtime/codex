@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+import runtime from './codex-runtime.cjs';
+runtime.run(process.argv.slice(2));

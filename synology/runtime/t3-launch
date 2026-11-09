@@ -27,11 +27,12 @@ mkdir -p "$HOME/.local/bin" "$HOME/.cache" "$HOME/.config" "$T3CODE_HOME/gateway
 chmod 700 "$T3CODE_HOME/gateway"
 [ -f "$HOME/.bashrc" ] || cat >"$HOME/.bashrc" <<'RC'
 # Agents you install here survive package upgrades.
-export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.bun/bin:/opt/t3:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.bun/bin:/opt/synology/bin:/opt/t3:$PATH"
 PS1='\w \$ '
 RC
 
 cd "$workspace"
+node /opt/synology/bin/codex-runtime.cjs
 /opt/t3/t3 serve --host 127.0.0.1 --port "$T3_PORT" --no-browser &
 t3_pid=$!
 trap 'kill -TERM "$t3_pid" "${gate_pid:-}" 2>/dev/null; wait' TERM INT
