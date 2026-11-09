@@ -53,7 +53,8 @@ compose:
   services:
     t3code:
       storage_init:
-        directories: [{base: /data/home, path: .t3}]
+        # The selected folder can belong to an administrator; /tmp is a sticky base.
+        directories: [{base: /tmp, path: t3-runtime}]
         runtime:
           environment:
             # Per-install key t3-gate requires; t3-key sends the same value.
