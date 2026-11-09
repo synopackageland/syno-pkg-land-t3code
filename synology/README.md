@@ -16,6 +16,11 @@ files outside `synology/` are upstream's and are never edited.
 Open **T3 Code** from the DSM main menu as an administrator. The first time,
 T3 Code's setup wizard asks you to connect agents and add a project.
 
+During package installation, select an existing NAS folder. It holds the App's
+home, agent installations, sign-ins, conversations and projects. Uninstalling
+the package retains this folder and its contents.
+This storage layout starts fresh and leaves previous named-volume data unused.
+
 ### Install an agent
 
 The package installs no agent. Install the ones you want from T3 Code itself;
@@ -57,8 +62,8 @@ variables**. Sign-ins are kept in the App's storage across upgrades.
 
 ### Projects
 
-Projects live in the Shared Folder chosen at installation (default `T3Code`),
-which T3 Code sees as `/workspace`. Agents and the terminal work there as the
+Projects live in the folder chosen at installation, which T3 Code sees as both
+`/workspace` and its home `/data/home`. Agents and the terminal work there as the
 package's own account, not as the signed-in DSM user. Files they create belong
 to that account. Grant other users access with the Shared Folder's permissions.
 
@@ -136,7 +141,7 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   agent CLI. Published as
   `ghcr.io/synopackageland/syno-pkg-land-t3code-runtime:<version>-<build>` and
   pinned by index digest in `compose.image.yaml`.
-- **`runtime/t3-launch`**: prepares the home (`/data/home`, a named volume) and a
+- **`runtime/t3-launch`**: prepares the home (`/data/home`, the selected NAS folder) and a
   passwd entry for the package UID, runs T3 Code on the container's loopback,
   issues the long-lived **DSM sign-in** session when it is missing or revoked,
   then runs `t3-gate`.
