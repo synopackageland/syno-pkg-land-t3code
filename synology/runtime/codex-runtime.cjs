@@ -1,20 +1,60 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { randomUUID } = require('node:crypto');
 
-function managedHome(base, env) {
-  const state = path.join(base, 'userdata');
-  const settings = JSON.parse(fs.readFileSync(path.join(state, 'settings.json'), 'utf8'));
+function managedInstances(base) {
+  const settings = JSON.parse(fs.readFileSync(path.join(base, 'userdata/settings.json'), 'utf8'));
   const candidates = Object.entries(settings.providerInstances ?? {}).filter(([, value]) =>
     value.driver === 'codex' && value.enabled !== false &&
     value.config?.enabled !== false && value.config?.setupMode === 'managed');
+  return { settings, candidates };
+}
+
+function homePaths(base, env, id, config) {
+  const absolute = (value) => path.resolve(value.replace(/^~(?=\/|$)/, env.HOME));
+  const shared = absolute(config.homePath?.trim() || path.join(env.HOME, '.codex'));
+  const shadow = absolute(config.shadowHomePath?.trim() ||
+    (id === 'codex' ? shared : path.join(base, 'userdata/providers/codex', id, 'shadow')));
+  return { shared, shadow };
+}
+
+function prepareManagedHomes(env = process.env) {
+  const base = env.T3CODE_HOME || path.join(env.HOME, '.t3');
+  if (!fs.existsSync(path.join(base, 'userdata/settings.json'))) return;
+  for (const [id, { config }] of managedInstances(base).candidates) {
+    const { shared, shadow } = homePaths(base, env, id, config);
+    if (shared === shadow || !fs.existsSync(shadow)) continue;
+    const source = path.join(shared, '.sandbox_migration');
+    const target = path.join(shadow, '.sandbox_migration');
+    const existing = fs.lstatSync(target, { throwIfNoEntry: false });
+    if (existing?.isSymbolicLink() && path.resolve(shadow, fs.readlinkSync(target)) === source) continue;
+    if (fs.statSync(shadow).uid !== process.getuid()) throw new Error('migration marker home ownership mismatch');
+    if (existing) {
+      const original = fs.lstatSync(source, { throwIfNoEntry: false });
+      if (!existing.isFile() || existing.uid !== process.getuid() || existing.size > 64 ||
+          !original?.isFile() || original.uid !== process.getuid() || original.size !== existing.size ||
+          !fs.readFileSync(target).equals(fs.readFileSync(source))) {
+        throw new Error('migration marker differs from shared home');
+      }
+    }
+    // Codex writes this marker in both homes; T3 requires shared entries to be links.
+    const temporary = path.join(shadow, `.sandbox_migration-${randomUUID()}`);
+    try {
+      fs.symlinkSync(source, temporary);
+      fs.renameSync(temporary, target);
+    } finally {
+      fs.rmSync(temporary, { force: true });
+    }
+  }
+}
+
+function managedHome(base, env) {
+  const { settings, candidates } = managedInstances(base);
   const selected = candidates.find(([id]) => id === settings.textGenerationModelSelection?.instanceId);
   const instance = selected ?? (candidates.length === 1 ? candidates[0] : undefined);
   if (!instance) throw new Error('managed home unavailable');
   const [id, { config }] = instance;
-  const shared = config.homePath?.trim() || path.join(env.HOME, '.codex');
-  const home = config.shadowHomePath?.trim() ||
-    (id === 'codex' ? shared : path.join(state, 'providers/codex', id, 'shadow'));
-  const absolute = path.resolve(home.replace(/^~(?=\/|$)/, env.HOME));
+  const { shadow: absolute } = homePaths(base, env, id, config);
   if (!fs.statSync(absolute).isDirectory()) throw new Error('managed home unavailable');
   return absolute;
 }
@@ -91,4 +131,5 @@ async function run(args) {
   }
 }
 
-module.exports = { resolveRuntime, waitForRuntime, run };
+if (require.main === module) prepareManagedHomes();
+module.exports = { resolveRuntime, waitForRuntime, prepareManagedHomes, run };

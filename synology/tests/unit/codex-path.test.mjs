@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, symlinkSync, readlinkSync, lstatSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
-const { resolveRuntime, waitForRuntime } = createRequire(import.meta.url)('../../runtime/codex-runtime.cjs');
+const { resolveRuntime, waitForRuntime, prepareManagedHomes } = createRequire(import.meta.url)('../../runtime/codex-runtime.cjs');
 
 function fixture(t) {
   const home = mkdtempSync(join(tmpdir(), 'codex-path-'));
@@ -89,6 +89,51 @@ test('CODEX_HOME defaults to the managed shadow home and preserves an explicit v
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout, `${home}\n`);
   }
+});
+
+test('launcher links the shared migration marker before shadow materialization, including identical old copies', (t) => {
+  const f = fixture(t);
+  const shared = join(f.home, '.codex');
+  mkdirSync(shared);
+  const source = join(shared, '.sandbox_migration');
+  const target = join(f.shadow, '.sandbox_migration');
+  writeFileSync(source, '1\n');
+  writeFileSync(join(shared, 'state_5.sqlite'), 'shared state');
+  writeFileSync(join(f.shadow, 'state_5.sqlite'), 'shadow state');
+  const settings = readFileSync(join(f.home, '.t3/userdata/settings.json'));
+  for (const duplicate of [false, true]) {
+    rmSync(target, { force: true });
+    if (duplicate) writeFileSync(target, '1\n');
+    prepareManagedHomes(f.env);
+    prepareManagedHomes(f.env);
+    assert.equal(readlinkSync(target), source);
+    assert.equal(readFileSync(source, 'utf8'), '1\n');
+    assert.equal(readFileSync(join(f.shadow, 'auth.json'), 'utf8'), '{}');
+    assert.equal(readFileSync(join(shared, 'state_5.sqlite'), 'utf8'), 'shared state');
+    assert.equal(readFileSync(join(f.shadow, 'state_5.sqlite'), 'utf8'), 'shadow state');
+    assert.deepEqual(readFileSync(join(f.home, '.t3/userdata/settings.json')), settings);
+  }
+});
+
+test('launcher preserves different markers and unrelated links and tolerates a new empty installation', (t) => {
+  const f = fixture(t);
+  const source = join(f.home, '.codex/.sandbox_migration');
+  const target = join(f.shadow, '.sandbox_migration');
+  prepareManagedHomes(f.env);
+  assert.equal(readlinkSync(target), source);
+  mkdirSync(join(f.home, '.codex'));
+  writeFileSync(source, '1\n');
+  rmSync(target);
+  writeFileSync(target, 'different');
+  assert.throws(() => prepareManagedHomes(f.env), /migration marker/);
+  assert.equal(readFileSync(target, 'utf8'), 'different');
+  rmSync(target);
+  symlinkSync(join(f.home, 'other'), target);
+  assert.throws(() => prepareManagedHomes(f.env), /migration marker/);
+  assert.equal(readlinkSync(target), join(f.home, 'other'));
+  rmSync(join(f.home, '.t3'), { recursive: true });
+  prepareManagedHomes(f.env);
+  assert.equal(lstatSync(join(f.home, '.codex')).isDirectory(), true);
 });
 
 test('only reuses the existing managed auth command for the matching app-server home', (t) => {

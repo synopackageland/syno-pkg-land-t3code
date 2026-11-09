@@ -32,6 +32,7 @@ PS1='\w \$ '
 RC
 
 cd "$workspace"
+node /opt/synology/bin/codex-runtime.cjs
 /opt/t3/t3 serve --host 127.0.0.1 --port "$T3_PORT" --no-browser &
 t3_pid=$!
 trap 'kill -TERM "$t3_pid" "${gate_pid:-}" 2>/dev/null; wait' TERM INT

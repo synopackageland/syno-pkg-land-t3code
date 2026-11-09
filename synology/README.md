@@ -157,6 +157,9 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   uses the configured managed home and the matching app-server's existing
   managed authentication configuration, waiting for a cold main turn to start
   that runtime; an explicit `CODEX_HOME` is preserved.
+  Before starting T3 Code, the launcher links each existing managed shadow's
+  `.sandbox_migration` marker to its shared home, replacing only identical,
+  package-owned copies so T3's shadow materialization can proceed.
 - **git:** repositories in the Shared Folder belong to DSM users, so the image
   sets `safe.directory` for the package UID.
 - **Headless Chrome:** T3 Code downloads its pinned Chrome for Testing
