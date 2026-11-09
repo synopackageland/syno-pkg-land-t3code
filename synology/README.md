@@ -19,6 +19,7 @@ T3 Code's setup wizard asks you to connect agents and add a project.
 During package installation, select an existing NAS folder. It holds the App's
 home, agent installations, sign-ins, conversations and projects. Uninstalling
 the package retains this folder and its contents.
+This storage layout starts fresh and leaves previous named-volume data unused.
 
 ### Install an agent
 
