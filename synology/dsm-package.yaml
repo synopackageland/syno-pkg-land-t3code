@@ -28,6 +28,7 @@ ui: {launch: new-page}
 capabilities: {composeMounts: true}
 
 install:
+  min_memory_mb: 1700
   # The gateway's HTTPS port is chosen in the install wizard.
   ports: true
   # Where projects live; mounted read/write at /workspace.
