@@ -61,13 +61,29 @@ function resolveRuntime(env = process.env, procRoot = '/proc') {
   return { executable, environment: { ...env, CODEX_HOME: home }, authArgs: managedAuthArgs(executable, home, procRoot) };
 }
 
-function run(args) {
+async function waitForRuntime(args, {
+  env = process.env,
+  procRoot = '/proc',
+  pause = () => new Promise((resolve) => setTimeout(resolve, 1000)),
+  now = Date.now,
+} = {}) {
+  let runtime = resolveRuntime(env, procRoot);
+  if (args[0] !== 'exec' || Object.hasOwn(env, 'CODEX_HOME')) return runtime;
+  const configured = Number(env.SYNOPKGLAND_STARTUP_BUDGET_SECONDS);
+  const budget = Number.isInteger(configured) && configured > 0 && configured <= 900 ? configured : 900;
+  const deadline = now() + budget * 1000;
+  // A cold main turn may not have started its app-server when title generation begins.
+  while (runtime.authArgs.length === 0 && !fs.existsSync(path.join(runtime.environment.CODEX_HOME, 'auth.json'))) {
+    if (now() >= deadline) throw new Error('managed authentication runtime unavailable');
+    await pause();
+    runtime = resolveRuntime(env, procRoot);
+  }
+  return runtime;
+}
+
+async function run(args) {
   try {
-    const runtime = resolveRuntime();
-    if (args[0] === 'exec' && !Object.hasOwn(process.env, 'CODEX_HOME') &&
-      runtime.authArgs.length === 0 && !fs.existsSync(path.join(runtime.environment.CODEX_HOME, 'auth.json'))) {
-      throw new Error('managed authentication runtime unavailable');
-    }
+    const runtime = await waitForRuntime(args);
     process.execve(runtime.executable, [runtime.executable, ...runtime.authArgs, ...args], runtime.environment);
   } catch {
     console.error('codex: managed Codex is unavailable; check its setup and active runtime in T3 Code Settings');
@@ -75,4 +91,4 @@ function run(args) {
   }
 }
 
-module.exports = { resolveRuntime, run };
+module.exports = { resolveRuntime, waitForRuntime, run };

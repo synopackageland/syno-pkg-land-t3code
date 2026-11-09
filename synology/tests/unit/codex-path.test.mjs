@@ -5,7 +5,7 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
-const { resolveRuntime } = createRequire(import.meta.url)('../../runtime/codex-runtime.cjs');
+const { resolveRuntime, waitForRuntime } = createRequire(import.meta.url)('../../runtime/codex-runtime.cjs');
 
 function fixture(t) {
   const home = mkdtempSync(join(tmpdir(), 'codex-path-'));
@@ -117,4 +117,36 @@ test('only reuses the existing managed auth command for the matching app-server 
   delete f.env.CODEX_HOME;
   rmSync(join(proc, '10'), { recursive: true });
   assert.deepEqual(resolveRuntime(f.env, proc).authArgs, []);
+});
+
+test('waits for the cold app-server before starting an unauthenticated title command', async (t) => {
+  const f = fixture(t);
+  f.install('0.166.0');
+  f.active('0.166.0');
+  rmSync(join(f.shadow, 'auth.json'));
+  const proc = join(f.home, 'proc');
+  mkdirSync(proc);
+  const paused = Promise.withResolvers();
+  const ready = Promise.withResolvers();
+  const pending = waitForRuntime(['exec'], {
+    env: f.env, procRoot: proc,
+    pause: () => { paused.resolve(); return ready.promise; },
+  });
+  const milestone = await Promise.race([
+    paused.promise.then(() => 'waiting'), pending.then(() => 'returned'),
+  ]);
+  assert.equal(milestone, 'waiting');
+  const dir = join(proc, '10');
+  mkdirSync(dir);
+  symlinkSync(join(f.home, '.t3/tools/codex/0.166.0/bin/codex'), join(dir, 'exe'));
+  writeFileSync(join(dir, 'environ'), `CODEX_HOME=${f.shadow}\0`);
+  const auth = 'model_providers.openai_token_sharing={auth={command="t3",args=["__managed-chatgpt-token"]}}';
+  writeFileSync(join(dir, 'cmdline'), ['codex', 'app-server', '-c', 'model_provider="openai_token_sharing"', '-c', auth, ''].join('\0'));
+  ready.resolve();
+  assert.deepEqual((await pending).authArgs, ['-c', 'model_provider="openai_token_sharing"', '-c', auth]);
+  let tick = 0;
+  rmSync(dir, { recursive: true });
+  await assert.rejects(waitForRuntime(['exec'], {
+    env: f.env, procRoot: proc, now: () => (tick++ === 0 ? 0 : 900_000),
+  }), /managed authentication runtime unavailable/);
 });

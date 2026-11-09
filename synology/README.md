@@ -155,7 +155,8 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   Bare `codex` calls fall back to T3 Code's active managed Codex release; a CLI
   installed by the user keeps priority. When `CODEX_HOME` is unset, the fallback
   uses the configured managed home and the matching app-server's existing
-  managed authentication configuration; an explicit `CODEX_HOME` is preserved.
+  managed authentication configuration, waiting for a cold main turn to start
+  that runtime; an explicit `CODEX_HOME` is preserved.
 - **git:** repositories in the Shared Folder belong to DSM users, so the image
   sets `safe.directory` for the package UID.
 - **Headless Chrome:** T3 Code downloads its pinned Chrome for Testing
