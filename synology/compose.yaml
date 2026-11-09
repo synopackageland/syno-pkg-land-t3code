@@ -7,10 +7,8 @@ services:
     hostname: t3code
     # storage_init needs the explicit argv; it is the image's own entrypoint.
     entrypoint: [/usr/bin/tini, --, /usr/local/bin/t3-launch]
-    read_only: true
+    # Writable root: `sudo apt-get install` adds to the container layer.
     environment:
-      # /tmp is the SDK's disk scratch (dsm-package.yaml), not memory.
-      TMPDIR: /tmp
       T3_WORKSPACE: /workspace
       # End T3 Code's headless Chrome after this many idle minutes (0: never).
       T3_CHROME_IDLE_MINUTES: "10"

@@ -13,7 +13,7 @@ FROM public.ecr.aws/docker/library/node:24.22.2-bookworm-slim@sha256:01d566e8d94
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       ca-certificates curl git openssh-client ripgrep python3 python3-venv \
-      bash less procps unzip xz-utils jq file tini libnss-wrapper \
+      bash less procps unzip xz-utils jq file tini sudo \
       fontconfig fonts-liberation fonts-dejavu-core fonts-noto-cjk \
       libglib2.0-0 libnspr4 libnss3 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 \
       libdbus-1-3 libx11-6 libxcb1 libxcomposite1 libxdamage1 libxext6 libxfixes3 \
@@ -54,8 +54,16 @@ ENV HOME=/data/home \
 
 # Chrome's own sandbox needs user namespaces the container does not grant (no
 # added capabilities, default seccomp profile). The container is the boundary:
-# package UID, read-only root, no capabilities, no-new-privileges.
+# package UID; container root only through an explicit sudo.
 ENV T3CODE_SERVER_BROWSER_SANDBOX=0
+
+# sudo inside the container (SDK run_as.sudo): the console user may run any
+# command as container root, one command at a time. The SDK's init appends that
+# user's /etc/passwd and /etc/group entry for the package UID at start, because
+# setuid sudo reads only the real files.
+RUN printf 'synopkg ALL=(ALL:ALL) NOPASSWD: ALL\n' > /etc/sudoers.d/synopkg \
+ && chmod 0440 /etc/sudoers.d/synopkg \
+ && chmod 0666 /etc/passwd /etc/group
 
 # Repositories in the Shared Folder belong to DSM users, not the package UID.
 RUN git config --system safe.directory '*'
