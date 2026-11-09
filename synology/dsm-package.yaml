@@ -6,7 +6,7 @@ schema: 2
 package: T3Code
 version: 0.1.7
 # The build resets to 1 with every upstream release (INFO <upstream>-0001).
-build: 7
+build: 8
 displayname: T3 Code
 description: A browser console for coding agents such as Codex and Claude Code. Install the agents you want yourself
 # The upstream owner is the maintainer; Syno Package Land is the distributor.
@@ -35,7 +35,7 @@ install:
   sharedFolder: {mode: select, key: workspace, permission: rw, picker: folder}
 
 compose:
-  sdk: 0.53.25
+  sdk: 0.53.26
   files: [compose.yaml, compose.image.yaml]
   # Token adapter for the gateway (helper/), one static binary per arch.
   helpers: {x86_64: .build/helpers/x86_64, aarch64: .build/helpers/aarch64}
@@ -52,8 +52,17 @@ compose:
       mounts: [{service: t3code, target: /data/home}, {service: t3code, target: /workspace}]
   services:
     t3code:
-      # Temporary files (agents, npm, Chrome) go to disk, emptied at every start.
-      scratch: [/tmp]
+      # The package UID runs T3 Code, its terminal and agents; only an explicit
+      # `sudo ...` runs as container root (for example `sudo apt-get install`).
+      run_as:
+        mode: package
+        sudo: {reason: "Install build tools with apt for coding agents"}
+      # The SDK's container init gives the package UID an account entry, HOME,
+      # TMPDIR and private credential file modes on every start.
+      console: {home: /data/home, user: synopkg}
+      # Temporary files (agents, npm, Chrome) go to disk, emptied at every start;
+      # TMPDIR points here. /tmp stays the image's own directory.
+      scratch: [/scratch]
       storage_init:
         runtime:
           environment:
@@ -61,7 +70,7 @@ compose:
             T3_GATE_KEY: {secret: gateway-key}
 
 identity_gateway:
-  sdk: 0.53.25
+  sdk: 0.53.26
   # After DSM admits an administrator, t3-key adds the gateway key and t3-gate
   # adds T3 Code's own session, so there is no T3 pairing step.
   mode: token

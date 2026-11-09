@@ -99,11 +99,28 @@ reload then.
 
 Chrome runs without its own sandbox here: the sandbox needs Linux user
 namespaces, which the container does not grant. The container is the boundary
-instead: it runs as the package's own account with a read-only system, no
-Linux capabilities and no way to gain privileges. A page that broke out of
+instead: it runs as the package's own account. A page that broke out of
 Chrome would have the same access as the agents and the terminal already have:
-T3 Code's data and the selected Shared Folder. Open only sites you trust in a
+T3 Code's data, the selected Shared Folder and `sudo` inside the container
+(see below). Open only sites you trust in a
 tab, as you would with any browser an agent controls.
+
+### sudo inside the container
+
+T3 Code, its terminal and agents run as the package's own account. The terminal
+may run single commands as container root with `sudo`, for example
+`sudo apt-get install -y build-essential`; no password is asked. The SDK grants
+this service only the capabilities sudo needs and no others: no privileged mode,
+devices, host network or Docker socket.
+
+Container root is root on the NAS for whatever is mounted: through `sudo`, the
+selected Shared Folder can be read and changed regardless of DSM permissions,
+and files created with `sudo` belong to root. Agents in the container can use
+`sudo` too. Choose a folder that belongs to the person using T3 Code.
+
+Packages installed with `apt-get` live in the container: they survive a restart
+of the package but are gone when the container is recreated (package update,
+repair or changed settings). Install them again after an update.
 
 ### Access from outside your network
 
@@ -130,7 +147,7 @@ available in this package.
 ```text
 browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity gateway
           DSM administrator sign-in; t3-key adds X-Synopkgland-T3-Key
-                         ──▶ container (package account, read-only root, no capabilities)
+                         ──▶ container (package account; sudo per command)
                              t3-gate :8080  checks the key, drops browser credentials,
                                             adds Authorization: Bearer <DSM sign-in session>
                              T3 Code 127.0.0.1:3773
@@ -142,7 +159,7 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   `ghcr.io/synopackageland/syno-pkg-land-t3code-runtime:<version>-<build>` and
   pinned by index digest in `compose.image.yaml`.
 - **`runtime/t3-launch`**: prepares the home (`/data/home`, the selected NAS folder) and a
-  passwd entry for the package UID, runs T3 Code on the container's loopback,
+  runs T3 Code on the container's loopback,
   issues the long-lived **DSM sign-in** session when it is missing or revoked,
   then runs `t3-gate`.
 - **`runtime/t3-gate.mjs`**: the only listener on the bridge. It requires the
@@ -156,7 +173,8 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
 - **`runtime/policy.json`**: T3 Code's managed policy (`/etc/t3code/policy.json`):
   updates off, T3 Connect off, usage data off, loopback clients only.
 - **PATH:** T3 Code reads PATH from a login shell; Debian's `/etc/profile`
-  resets it, so `/etc/profile.d/synology-t3-path.sh` puts `~/.local/bin` first.
+  resets it, so `/etc/profile.d/synology-t3-path.sh` puts `~/.local/bin` first
+  and keeps `/synopkgland/bin` last.
   Bare `codex` calls fall back to T3 Code's active managed Codex release; a CLI
   installed by the user keeps priority. When `CODEX_HOME` is unset, the fallback
   uses the configured managed home and the matching app-server's existing
@@ -165,9 +183,17 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   Before starting T3 Code, the launcher links each existing managed shadow's
   `.sandbox_migration` marker to its shared home, replacing only identical,
   package-owned copies so T3's shadow materialization can proceed.
-- **Temporary files:** `/tmp` (`TMPDIR`) is the SDK's disk scratch in the
+- **Container init:** the SDK starts the launcher through
+  `synopkgland container init` (then tini, PID 1, which reaps orphaned
+  processes). On every start it gives the package UID the account `synopkg`
+  in `/etc/passwd`, sets `HOME`, `USER`, `LOGNAME` and `TMPDIR`, and removes
+  group/other access from existing credential files it owns (`~/.ssh`, its
+  keys and config, `~/.gnupg`, `~/.netrc` and similar). A key created later
+  can be tightened again with `synopkgland container fix-permissions`.
+- **Temporary files:** `/scratch` (`TMPDIR`) is the SDK's disk scratch in the
   package's own storage, not memory: owned by the package account, mode 0700
-  and emptied at every start. Agents, npm, git and headless Chrome write their
+  and emptied at every start. `/tmp` is the image's own directory (mode 1777,
+  container layer), which system tools such as apt also use. Agents, npm, git and headless Chrome write their
   temporary files there; caches stay in the home folder.
 - **git:** repositories in the Shared Folder belong to DSM users, so the image
   sets `safe.directory` for the package UID.
@@ -175,8 +201,7 @@ browser ──HTTPS :23773 (DSM nginx, DSM certificate)──▶ SDK identity ga
   `chrome-headless-shell` into `~/.t3/tools` on first use (linux64 and
   linux-arm64). The image provides only the shared libraries and fonts it needs,
   and sets `T3CODE_SERVER_BROWSER_SANDBOX=0` because Chrome's sandbox cannot start
-  without user namespaces; no capability, privileged mode or seccomp change is
-  used.
+  without user namespaces; no privileged mode or seccomp change is used.
 - **Idle Chrome** (`runtime/t3-chrome-reaper.mjs`, run inside `t3-gate`): every
   minute it reads `/proc` for T3 Code's own `chrome-headless-shell` processes.
   Chrome counts as idle only when, for the whole `T3_CHROME_IDLE_MINUTES` period

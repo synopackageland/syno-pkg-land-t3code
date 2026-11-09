@@ -10,14 +10,6 @@ T3_PORT=3773
 GATE_PORT=${T3_GATE_PORT:-8080}
 token_file="$T3CODE_HOME/gateway/token"
 
-# The package UID has no passwd entry in the image; ssh, git and shells want one.
-if ! getent passwd "$(id -u)" >/dev/null; then
-  printf 'synopkg:x:%s:%s:T3 Code:%s:/bin/bash\n' "$(id -u)" "$(id -g)" "$HOME" >/tmp/passwd
-  cat /etc/passwd >>/tmp/passwd
-  { cat /etc/group; printf 'synopkg:x:%s:\n' "$(id -g)"; } >/tmp/group
-  export LD_PRELOAD=libnss_wrapper.so NSS_WRAPPER_PASSWD=/tmp/passwd NSS_WRAPPER_GROUP=/tmp/group
-fi
-
 # The SDK loads the per-install gateway key from its runtime secret.
 [ "${#T3_GATE_KEY}" -ge 32 ] || { echo "t3-launch: T3_GATE_KEY is missing" >&2; exit 1; }
 workspace=${T3_WORKSPACE:-$HOME}
