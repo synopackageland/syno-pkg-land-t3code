@@ -1,0 +1,17 @@
+#!/bin/bash
+# Text generation can call bare codex even when T3 installed its managed CLI.
+set -eu
+root=${T3CODE_HOME:-$HOME/.t3}/tools/codex
+unavailable() {
+  echo 'codex: managed Codex is unavailable; install it from T3 Code Settings' >&2
+  exit 127
+}
+version=$(node -e '
+  try {
+    const { version } = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
+    if (typeof version !== "string" || !/^\d+\.\d+\.\d+$/.test(version)) process.exit(1);
+    process.stdout.write(version);
+  } catch { process.exit(1); }
+' "$root/active.json") || unavailable
+[ -x "$root/$version/bin/codex" ] || unavailable
+exec "$root/$version/bin/codex" "$@"

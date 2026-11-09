@@ -27,7 +27,7 @@ mkdir -p "$HOME/.local/bin" "$HOME/.cache" "$HOME/.config" "$T3CODE_HOME/gateway
 chmod 700 "$T3CODE_HOME/gateway"
 [ -f "$HOME/.bashrc" ] || cat >"$HOME/.bashrc" <<'RC'
 # Agents you install here survive package upgrades.
-export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.bun/bin:/opt/t3:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$HOME/.bun/bin:/opt/synology/bin:/opt/t3:$PATH"
 PS1='\w \$ '
 RC
 

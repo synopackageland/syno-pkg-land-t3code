@@ -47,7 +47,7 @@ ENV HOME=/data/home \
     XDG_CONFIG_HOME=/data/home/.config \
     XDG_DATA_HOME=/data/home/.local/share \
     XDG_CACHE_HOME=/data/home/.cache \
-    PATH=/data/home/.local/bin:/data/home/.opencode/bin:/data/home/.bun/bin:/opt/t3:/usr/local/bin:/usr/bin:/bin \
+    PATH=/data/home/.local/bin:/data/home/.opencode/bin:/data/home/.bun/bin:/opt/synology/bin:/opt/t3:/usr/local/bin:/usr/bin:/bin \
     SHELL=/bin/bash \
     T3CODE_NO_BROWSER=1 \
     T3CODE_TELEMETRY_ENABLED=false
@@ -64,6 +64,7 @@ RUN git config --system safe.directory '*'
 COPY policy.json /etc/t3code/policy.json
 COPY profile-path.sh /etc/profile.d/synology-t3-path.sh
 COPY t3-launch /usr/local/bin/t3-launch
+COPY codex /opt/synology/bin/codex
 COPY t3-gate.mjs t3-chrome-reaper.mjs /opt/synology/
 COPY LICENSE-wrapper.txt /usr/share/doc/syno-pkg-land-t3code/LICENSE
 # A fresh named volume copies this directory and its mode, so the fixed but
