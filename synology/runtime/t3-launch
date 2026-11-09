@@ -20,10 +20,9 @@ fi
 
 # The SDK loads the per-install gateway key from its runtime secret.
 [ "${#T3_GATE_KEY}" -ge 32 ] || { echo "t3-launch: T3_GATE_KEY is missing" >&2; exit 1; }
-workspace=${T3_WORKSPACE:-$HOME/workspace}
-[ -d "$workspace" ] || workspace=$HOME/workspace
+workspace=${T3_WORKSPACE:-$HOME}
 
-mkdir -p "$HOME/.local/bin" "$HOME/.cache" "$HOME/.config" "$T3CODE_HOME/gateway" "$HOME/workspace"
+mkdir -p "$HOME/.local/bin" "$HOME/.cache" "$HOME/.config" "$T3CODE_HOME/gateway"
 chmod 700 "$T3CODE_HOME/gateway"
 [ -f "$HOME/.bashrc" ] || cat >"$HOME/.bashrc" <<'RC'
 # Agents you install here survive package upgrades.

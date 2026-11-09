@@ -39,7 +39,7 @@ RUN --mount=type=bind,from=release,target=/release set -eu; \
     mkdir -p /opt/t3; tar --no-same-owner -xzf "$archive" -C /opt/t3 --strip-components=1; \
     /opt/t3/t3 --version
 
-# Persistent per-package home. Everything user-installed lands under it.
+# The installer-selected NAS folder is mounted here as the package UID.
 ENV HOME=/data/home \
     T3CODE_HOME=/data/home/.t3 \
     NPM_CONFIG_PREFIX=/data/home/.local \
@@ -67,9 +67,7 @@ COPY t3-launch /usr/local/bin/t3-launch
 COPY codex codex-runtime.cjs /opt/synology/bin/
 COPY t3-gate.mjs t3-chrome-reaper.mjs /opt/synology/
 COPY LICENSE-wrapper.txt /usr/share/doc/syno-pkg-land-t3code/LICENSE
-# A fresh named volume copies this directory and its mode, so the fixed but
-# build-time-unknown package UID can create its home inside it.
-RUN mkdir -m 1777 /data
+RUN mkdir -p /data/home /workspace
 WORKDIR /data
 EXPOSE 8080
 ENTRYPOINT ["/usr/bin/tini", "--", "/usr/local/bin/t3-launch"]
