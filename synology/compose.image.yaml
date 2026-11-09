@@ -1,7 +1,7 @@
 {
   "services": {
     "t3code": {
-      "image": "ghcr.io/synopackageland/syno-pkg-land-t3code-runtime:0.1.7-0006@sha256:9a467de523cbcb098d8989533aa0ce1ed2820757de050aa3c6c0f9e8094487fd"
+      "image": "ghcr.io/synopackageland/syno-pkg-land-t3code-runtime:0.1.7-0007@sha256:77d2fdd187c1f10a073033f4476ab7cf41438478362d967a4b669becb742b01b"
     }
   }
 }
