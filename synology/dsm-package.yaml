@@ -6,7 +6,7 @@ schema: 2
 package: T3Code
 version: 0.1.7
 # The build resets to 1 with every upstream release (INFO <upstream>-0001).
-build: 8
+build: 9
 displayname: T3 Code
 description: A browser console for coding agents such as Codex and Claude Code. Install the agents you want yourself
 # The upstream owner is the maintainer; Syno Package Land is the distributor.
@@ -28,7 +28,12 @@ ui: {launch: new-page}
 capabilities: {composeMounts: true}
 
 install:
+  # MemTotal in MiB: 2 GB machines report about 1.75 GB and can install.
   min_memory_mb: 1700
+  # Below about 85% of 4 GB (4 GB machines report about 3.7 GB) the install
+  # wizard warns, without blocking, that agents run slowly on the NAS and
+  # points to a remote environment (messages/install.recommended_memory_message).
+  recommended_memory_mb: 3400
   # The gateway's HTTPS port is chosen in the install wizard.
   ports: true
   # The selected folder is both the persistent home and the project workspace.
@@ -211,6 +216,8 @@ metadata:
       T3 Code viene aggiornato solo tramite il Centro pacchetti. Per usarlo al di fuori della
       rete locale, connettiti tramite VPN.
 i18n:
+  # Only the install wizard's recommended-memory advice; T3 Code's UI is upstream's.
+  messages: messages
   info:
     zh-TW: {description: "Codex、Claude Code 等 coding agent 的瀏覽器控制台。請自行安裝所需的 agent"}
     zh-CN: {description: "Codex、Claude Code 等 coding agent 的浏览器控制台。请自行安装所需的 agent"}

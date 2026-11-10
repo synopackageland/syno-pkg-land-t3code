@@ -1,0 +1,3 @@
+{
+  "install.recommended_memory_message": "此記憶體容量下，Codex 等 agent 在 NAS 上執行會很慢。建議改在另一台電腦上執行，並在 T3 Code 中連線：Settings → Connections → Add environment（Remote link）"
+}

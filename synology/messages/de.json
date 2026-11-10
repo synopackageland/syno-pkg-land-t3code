@@ -1,0 +1,3 @@
+{
+  "install.recommended_memory_message": "Mit diesem Arbeitsspeicher laufen Codex und andere Agenten auf dem NAS langsam. Führen Sie sie stattdessen auf einem anderen Computer aus und verbinden Sie ihn in T3 Code: Settings → Connections → Add environment (Remote link)"
+}

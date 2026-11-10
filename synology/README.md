@@ -10,6 +10,8 @@ files outside `synology/` are upstream's and are never edited.
 - **Requires:** DSM 7.2.1 or later, Container Manager, an x86_64 or aarch64 NAS.
   Plan for about 1 GB of RAM for T3 Code and the agents you run, and about
   300 MB more while a browser tab is open.
+  Installation needs a 2 GB NAS; below 4 GB the install wizard recommends
+  running agents on another computer (see below).
 
 ## Using T3 Code
 
@@ -20,6 +22,24 @@ During package installation, select an existing NAS folder. It holds the App's
 home, agent installations, sign-ins, conversations and projects. Uninstalling
 the package retains this folder and its contents.
 This storage layout starts fresh and leaves previous named-volume data unused.
+
+### Less than 4 GB of RAM: run agents on another computer
+
+On a NAS with less than 4 GB of RAM (`install.recommended_memory_mb: 3400`), the
+install wizard warns that Codex and other agents run slowly there; installation
+can continue. Agent turns that swap can take minutes on such a NAS. Instead, run
+the agents on another computer and use T3 Code on the NAS only as the console:
+
+1. On the other computer (Node.js installed), start T3 Code with `npx t3 serve`
+   and create a pairing link with `npx t3 pair --tailscale`. The NAS page is
+   HTTPS, so browsers do not connect to a plain-HTTP link; the Tailscale link is
+   HTTPS on your tailnet, so the device you browse from must be on it too.
+2. In T3 Code on the NAS, open **Settings → Connections → Add environment**,
+   choose **Remote link**, and paste the pairing link (it fills **Host** and
+   **Pairing code**).
+
+The agents, their sign-ins and projects then live on that computer. The desktop
+app's SSH environments are not available in a browser.
 
 ### Install an agent
 
