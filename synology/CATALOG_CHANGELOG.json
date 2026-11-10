@@ -1,11 +1,11 @@
 {
-  "en": "The install wizard warns on NAS models with less than 4 GB of RAM that agents run slowly there, and points to running them on another computer through T3 Code's Add environment",
-  "zh-TW": "記憶體少於 4 GB 的 NAS 安裝時會提示 agent 在此執行較慢，並建議透過 T3 Code 的 Add environment 改在另一台電腦上執行",
-  "zh-CN": "内存少于 4 GB 的 NAS 安装时会提示 agent 在此运行较慢，并建议通过 T3 Code 的 Add environment 改在另一台电脑上运行",
-  "ja": "メモリが 4 GB 未満の NAS では、インストール時にエージェントの動作が遅くなることを警告し、T3 Code の Add environment で別のコンピューターでの実行を案内",
-  "ko": "메모리가 4 GB 미만인 NAS에서는 설치 시 에이전트가 느리게 실행된다고 안내하고 T3 Code의 Add environment로 다른 컴퓨터에서 실행하도록 권장",
-  "de": "Der Installationsassistent weist auf NAS mit weniger als 4 GB RAM darauf hin, dass Agenten dort langsam laufen, und empfiehlt einen anderen Computer über Add environment in T3 Code",
-  "fr": "L'assistant d'installation avertit sur les NAS de moins de 4 Go de RAM que les agents y sont lents et conseille un autre ordinateur via Add environment dans T3 Code",
-  "es": "El asistente de instalación advierte en NAS con menos de 4 GB de RAM que los agentes van lentos y recomienda otro equipo mediante Add environment de T3 Code",
-  "it": "La procedura di installazione avvisa sui NAS con meno di 4 GB di RAM che gli agenti sono lenti e consiglia un altro computer tramite Add environment di T3 Code"
+  "en": "0.1.7-0010\n\n- Package Center description recommends running agents on another computer on low-memory NAS models",
+  "zh-TW": "0.1.7-0010\n\n- 套件中心說明建議在低記憶體 NAS 機型上改於其他電腦執行 agent",
+  "zh-CN": "0.1.7-0010\n\n- 套件中心说明建议在低内存 NAS 机型上改于其他电脑运行 agent",
+  "ja": "0.1.7-0010\n\n- パッケージセンターの説明で、メモリの少ない NAS では別のコンピューターでエージェントを実行することを推奨",
+  "ko": "0.1.7-0010\n\n- 패키지 센터 설명에서 메모리가 적은 NAS 모델은 다른 컴퓨터에서 에이전트를 실행하도록 권장",
+  "de": "0.1.7-0010\n\n- Die Beschreibung im Paket-Zentrum empfiehlt bei NAS-Modellen mit wenig Arbeitsspeicher, Agenten auf einem anderen Computer auszuführen",
+  "fr": "0.1.7-0010\n\n- La description du Centre de paquets recommande d’exécuter les agents sur un autre ordinateur pour les NAS disposant de peu de mémoire",
+  "es": "0.1.7-0010\n\n- La descripción del Centro de paquetes recomienda ejecutar los agentes en otro equipo en modelos NAS con poca memoria",
+  "it": "0.1.7-0010\n\n- La descrizione nel Centro pacchetti consiglia di eseguire gli agenti su un altro computer sui modelli NAS con poca memoria"
 }

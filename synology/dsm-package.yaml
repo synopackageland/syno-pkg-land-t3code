@@ -6,9 +6,9 @@ schema: 2
 package: T3Code
 version: 0.1.7
 # The build resets to 1 with every upstream release (INFO <upstream>-0001).
-build: 9
+build: 10
 displayname: T3 Code
-description: A browser console for coding agents such as Codex and Claude Code. Install the agents you want yourself
+description: A browser console for coding agents such as Codex and Claude Code. Install the agents you want yourself. On a NAS with less than 4 GB of memory, run agents on another computer or use a lightweight one such as Pi
 # The upstream owner is the maintainer; Syno Package Land is the distributor.
 maintainer: pingdotgg
 # Upstream's own app icon, unchanged (assets/icon-source.json).
@@ -219,11 +219,11 @@ i18n:
   # Only the install wizard's recommended-memory advice; T3 Code's UI is upstream's.
   messages: messages
   info:
-    zh-TW: {description: "Codex、Claude Code 等 coding agent 的瀏覽器控制台。請自行安裝所需的 agent"}
-    zh-CN: {description: "Codex、Claude Code 等 coding agent 的浏览器控制台。请自行安装所需的 agent"}
-    ja: {description: "Codex や Claude Code などのコーディングエージェント用ブラウザーコンソール。エージェントはご自身でインストールしてください"}
-    ko: {description: "Codex, Claude Code 등 코딩 에이전트를 위한 브라우저 콘솔입니다. 원하는 에이전트는 직접 설치하세요"}
-    de: {description: "Browser-Konsole für Coding-Agenten wie Codex und Claude Code. Die gewünschten Agenten installieren Sie selbst"}
-    fr: {description: "Console web pour les agents de code comme Codex et Claude Code. Installez vous-même les agents de votre choix"}
-    es: {description: "Consola web para agentes de código como Codex y Claude Code. Instale usted mismo los agentes que desee"}
-    it: {description: "Console web per agenti di coding come Codex e Claude Code. Installa tu gli agenti che desideri"}
+    zh-TW: {description: "Codex、Claude Code 等 coding agent 的瀏覽器控制台。請自行安裝所需的 agent。記憶體少於 4 GB 的 NAS 建議在其他電腦執行 agent，或改用 Pi 等輕量 agent"}
+    zh-CN: {description: "Codex、Claude Code 等 coding agent 的浏览器控制台。请自行安装所需的 agent。内存少于 4 GB 的 NAS 建议在其他电脑运行 agent，或改用 Pi 等轻量 agent"}
+    ja: {description: "Codex や Claude Code などのコーディングエージェント用ブラウザーコンソール。エージェントはご自身でインストールしてください。メモリが 4 GB 未満の NAS では、別のコンピューターでエージェントを実行するか、Pi のような軽量なエージェントをお使いください"}
+    ko: {description: "Codex, Claude Code 등 코딩 에이전트를 위한 브라우저 콘솔입니다. 원하는 에이전트는 직접 설치하세요. 메모리가 4 GB 미만인 NAS에서는 다른 컴퓨터에서 에이전트를 실행하거나 Pi 같은 가벼운 에이전트를 사용하세요"}
+    de: {description: "Browser-Konsole für Coding-Agenten wie Codex und Claude Code. Die gewünschten Agenten installieren Sie selbst. Auf einem NAS mit weniger als 4 GB Arbeitsspeicher führen Sie Agenten besser auf einem anderen Computer aus oder nutzen einen schlanken wie Pi"}
+    fr: {description: "Console web pour les agents de code comme Codex et Claude Code. Installez vous-même les agents de votre choix. Sur un NAS doté de moins de 4 Go de mémoire, exécutez les agents sur un autre ordinateur ou choisissez-en un léger comme Pi"}
+    es: {description: "Consola web para agentes de código como Codex y Claude Code. Instale usted mismo los agentes que desee. En un NAS con menos de 4 GB de memoria, ejecute los agentes en otro equipo o use uno ligero como Pi"}
+    it: {description: "Console web per agenti di coding come Codex e Claude Code. Installa tu gli agenti che desideri. Su un NAS con meno di 4 GB di memoria, esegui gli agenti su un altro computer o usane uno leggero come Pi"}
