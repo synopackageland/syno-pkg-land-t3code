@@ -1,0 +1,3 @@
+{
+  "install.recommended_memory_message": "Avec cette quantité de mémoire, Codex et les autres agents sont lents sur le NAS. Exécutez-les plutôt sur un autre ordinateur et connectez-le dans T3 Code : Settings → Connections → Add environment (Remote link)"
+}

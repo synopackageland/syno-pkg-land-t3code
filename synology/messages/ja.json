@@ -1,0 +1,3 @@
+{
+  "install.recommended_memory_message": "このメモリ容量では、Codex などのエージェントは NAS 上での動作が遅くなります。別のコンピューターで実行し、T3 Code の Settings → Connections → Add environment（Remote link）で接続してください"
+}
