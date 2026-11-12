@@ -6,7 +6,7 @@ schema: 2
 package: T3Code
 version: 0.1.7
 # The build resets to 1 with every upstream release (INFO <upstream>-0001).
-build: 10
+build: 11
 displayname: T3 Code
 description: A browser console for coding agents such as Codex and Claude Code. Install the agents you want yourself. On a NAS with less than 4 GB of memory, run agents on another computer or use a lightweight one such as Pi
 # The upstream owner is the maintainer; Syno Package Land is the distributor.
