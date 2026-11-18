@@ -25,9 +25,9 @@ RUN apt-get update \
 # package version alone decides the server version and startup needs no network.
 # The "release" context holds t3-<version>-linux-<arch>.tar.gz from upstream's
 # GitHub release; the SHA-256 pins are upstream's SHA256SUMS lines.
-ARG T3_VERSION=0.1.7
-ARG T3_SHA256_X64=c089892bf7922e2e73c6f44a5d1ea125c99f70e378c18361cbbed2fba1920e6c
-ARG T3_SHA256_ARM64=5a528e23af394cc6f359036d3cb8441fda14129d477630fc6c53e4f4a1025bc8
+ARG T3_VERSION=0.1.10
+ARG T3_SHA256_X64=9bea9d36a217299a0af880e8c347b536ed6a9a2f5bf328a695d174d63628c5e8
+ARG T3_SHA256_ARM64=5ffbd224f53d0f827279825347a7ebf5a7ac98ad5c1347d47409f30aa2a1e425
 ARG TARGETARCH
 RUN --mount=type=bind,from=release,target=/release set -eu; \
     case "$TARGETARCH" in \
